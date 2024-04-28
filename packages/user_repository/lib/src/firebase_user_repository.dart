@@ -1,7 +1,9 @@
 // class that handles all the functions such as sign in sign up and reset password
 import 'dart:developer';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:user_repository/src/models/my_user.dart';
+import 'entities/entities.dart';
 import 'user_repo.dart';
 
 class FirebaseUserRepository implements UserRepository {
@@ -10,9 +12,22 @@ class FirebaseUserRepository implements UserRepository {
     FirebaseAuth? firebaseAuth,
   }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
-  // Create Firebase authentication parameters in our class
+  // Create Firebase authentication parameters in our class.
   final FirebaseAuth _firebaseAuth;
 
+  // Create a collection of users in Firestore database in our class.
+  final usersCollection = FirebaseFirestore.instance.collection('users');
+  
+  // Steram of [MyUser] which will emit the current user when the authentication state changes.
+  // Emits [MyUser.empty] if the user is not authenticated.
+  @override
+  Stream<User?> get user {
+    return _firebaseAuth.authStateChanges().map((firebaseUser) {
+      final user = firebaseUser;
+      return user;
+    });
+    
+  }
   @override
   Future<MyUser> signUp(MyUser myUser, String password) async {
     try {
@@ -63,6 +78,32 @@ class FirebaseUserRepository implements UserRepository {
   Future<void> resetPassword(String email) async {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      log(e.toString());
+      rethrow;
+    }
+  }
+  
+  @override
+  Future<void> setUserData(MyUser user) async {
+    try {
+      // Set user data in Firestore
+      // Access the document that take the parameter user id and set data inside this document
+      // Transform MyUser object to MyUserEntity object and transform to JSON and send it to Firebase
+      await usersCollection.doc(user.id).set(user.toEntity().toDocument());
+    } catch (e) {
+      log(e.toString());
+      rethrow;
+    }
+  }
+  
+  @override
+  Future<MyUser> getMyUser(String myUserId) async {
+    try {
+      // Get user data from Firestore
+      return usersCollection.doc(myUserId).get().then((value) {
+        return MyUser.fromEntity(MyUserEntity.fromDocument(value.data()!));
+      });
     } catch (e) {
       log(e.toString());
       rethrow;
