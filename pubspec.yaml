@@ -9,7 +9,19 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  
+  # Firebase
   firebase_core: ^2.30.1
+  firebase_auth: ^4.19.4
+
+  # Bloc
+  flutter_bloc: ^8.1.5
+  equatable: ^2.0.5
+  
+  # Custom Repository
+  user_repository: 
+    path: packages/user_repository
+
 
 dev_dependencies:
   flutter_test:
